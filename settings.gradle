@@ -1,2 +1,4 @@
 rootProject.name = 'learning-kafka'
+include 'kafka-basics'
+include 'twitter-kafka-elasticsearch'
 
