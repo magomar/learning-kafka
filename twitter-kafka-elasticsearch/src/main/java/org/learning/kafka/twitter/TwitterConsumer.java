@@ -10,6 +10,7 @@ import com.twitter.hbc.core.processor.StringDelimitedProcessor;
 import com.twitter.hbc.httpclient.auth.Authentication;
 import com.twitter.hbc.httpclient.auth.OAuth1;
 import org.apache.commons.configuration2.Configuration;
+import org.learning.kafka.Config;
 import org.learning.kafka.ConfigurationLoader;
 
 import java.util.Arrays;
@@ -22,7 +23,7 @@ public class TwitterConsumer {
 
     public TwitterConsumer(String... terms) {
         Configuration config = ConfigurationLoader.load();
-        msgQueue = new LinkedBlockingQueue<>(config.getInt("hosebird.msq_queue_capacity", 1000));
+        msgQueue = new LinkedBlockingQueue<>(Config.HOSEBIRD_MSG_QUEUE_CAPACITY.get());
         Hosts hosebirdHosts = new HttpHosts(Constants.STREAM_HOST);
         StatusesFilterEndpoint hosebirdEndpoint = new StatusesFilterEndpoint();
         // Optional: set up some followings and track terms
@@ -32,14 +33,14 @@ public class TwitterConsumer {
         hosebirdEndpoint.trackTerms(Arrays.asList(terms));
 
         // These secrets should be read from a config file
-        String consumerKey = config.getString("hosebird.key");
-        String consumerSecret = config.getString("hosebird.secret");
-        String token = config.getString("hosebird.token");
-        String tokenSecret = config.getString("hosebird.token-secret");
+        String consumerKey = Config.HOSEBIRD_KEY.get();
+        String consumerSecret = Config.HOSEBIRD_SECRET.get();
+        String token = Config.HOSEBIRD_TOKEN.get();
+        String tokenSecret = Config.HOSEBIRD_TOKEN_SECRET.get();
         Authentication hosebirdAuth = new OAuth1(consumerKey, consumerSecret, token, tokenSecret);
 
         ClientBuilder builder = new ClientBuilder()
-                .name("Hosebird-Kafka-Client")  // optional: mainly for the logs
+                .name(Config.HOSEBIRD_CLIENT_ID.get())  // optional: mainly for the logs
                 .hosts(hosebirdHosts)
                 .authentication(hosebirdAuth)
                 .endpoint(hosebirdEndpoint)
