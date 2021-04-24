@@ -18,9 +18,6 @@ public class ConsumerDemoThread {
         new ConsumerDemoThread().run();
     }
 
-    public ConsumerDemoThread() {
-    }
-
     public void run() {
         Logger logger = LoggerFactory.getLogger(ConsumerDemoThread.class);
         String BOOTSTRAP_SERVERS = "127.0.0.1:9092";

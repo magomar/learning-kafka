@@ -1,9 +1,14 @@
 plugins {
     id 'java'
+    id 'application'
 }
 
 group 'org.learning.kafka'
 version '1.0-SNAPSHOT'
+
+application {
+    mainClass = 'org.learning.kafka.TwittyCLI'
+}
 
 repositories {
     mavenCentral()
@@ -20,6 +25,8 @@ dependencies {
     implementation group: 'io.github.cdimascio', name: 'java-dotenv', version: '5.2.2'
     // https://mvnrepository.com/artifact/org.apache.kafka/kafka-clients
     implementation group: 'org.apache.kafka', name: 'kafka-clients', version: '2.7.0'
+    // https://mvnrepository.com/artifact/info.picocli/picocli
+    implementation group: 'info.picocli', name: 'picocli', version: '4.6.1'
     // https://mvnrepository.com/artifact/com.twitter/hbc-core
     implementation group: 'com.twitter', name: 'hbc-core', version: '2.2.0'
     // https://mvnrepository.com/artifact/org.elasticsearch.client/elasticsearch-rest-high-level-client

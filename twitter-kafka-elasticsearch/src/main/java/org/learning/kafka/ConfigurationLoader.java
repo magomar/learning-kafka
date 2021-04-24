@@ -18,7 +18,12 @@ public class ConfigurationLoader {
     private CombinedConfiguration configuration;
 
     private ConfigurationLoader() {
-        Dotenv dotenv = Dotenv.load();
+        Dotenv dotenv = null;
+        try {
+            dotenv = Dotenv.load();
+        } catch (Exception ex) {
+            logger.warn("No .env file found");
+        }
         Parameters params = new Parameters();
         String configFile = "config.xml";
         CombinedConfigurationBuilder builder = new CombinedConfigurationBuilder()
@@ -29,9 +34,10 @@ public class ConfigurationLoader {
             logger.error("Error obtaining configuration from {}", configFile);
             e.printStackTrace();
         }
-        for (DotenvEntry entry : dotenv.entries()) {
-            configuration.setProperty(entry.getKey(), entry.getValue());
-        }
+        if (null != dotenv)
+            for (DotenvEntry entry : dotenv.entries()) {
+                configuration.setProperty(entry.getKey(), entry.getValue());
+            }
     }
 
     public static synchronized Configuration load() {

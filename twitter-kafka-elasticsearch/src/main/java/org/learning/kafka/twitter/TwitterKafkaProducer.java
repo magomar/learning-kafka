@@ -2,6 +2,7 @@ package org.learning.kafka.twitter;
 
 import com.twitter.hbc.core.Client;
 import org.apache.kafka.clients.producer.Callback;
+import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringSerializer;
@@ -13,27 +14,34 @@ import java.util.Properties;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-public class KafkaProducer {
-    private static final Logger logger = LoggerFactory.getLogger(KafkaProducer.class);
+public class TwitterKafkaProducer {
+    private static final Logger logger = LoggerFactory.getLogger(TwitterKafkaProducer.class);
     private static final Callback sendCallback = (metadata, exception) -> {
         if (exception == null) {
             logger.info("Metadata received -> Topic: {}, Partition: {}, Offset: {}, Timestamp: {}",
                     metadata.topic(), metadata.partition(), metadata.offset(), metadata.timestamp());
         } else {
-            logger.error("Error while producing {}", exception);
+            logger.error("Error sending message to kafka");
+            exception.printStackTrace();
         }
     };
 
     public static void main(String[] args) {
-        new KafkaProducer().run();
+        String[] keywords = ((String) Config.HOSEBIRD_TERMS.get()).split(",");
+        startProducer(keywords);
     }
 
-    private void run() {
+    public static void startProducer(String[] keywords) {
+        new TwitterKafkaProducer().run(keywords);
+    }
+
+    private void run(String[] keywords) {
         logger.info("Setup");
-        TwitterConsumer twitterConsumer = new TwitterConsumer(Config.HOSEBIRD_TERMS.get());
+
+        TwitterConsumer twitterConsumer = new TwitterConsumer(keywords);
         Client client = twitterConsumer.getHosebirdClient();
         BlockingQueue<String> msgQueue = twitterConsumer.getMsgQueue();
-        org.apache.kafka.clients.producer.KafkaProducer producer = getKafkaProducer();
+        KafkaProducer<String, String> producer = getKafkaProducer();
 
         // add a shutdown hook
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
@@ -76,15 +84,15 @@ public class KafkaProducer {
         properties.put(ProducerConfig.RETRIES_CONFIG, String.valueOf(Integer.MAX_VALUE));
         properties.put(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, "5");
         // High throughput producer (at the expense of higher latency and CPU usage)
-        String compressionType=Config.KAFKA_COMPRESSION_TYPE.get();
+        String compressionType = Config.KAFKA_COMPRESSION_TYPE.get();
         if (null != compressionType) properties.setProperty(ProducerConfig.COMPRESSION_TYPE_CONFIG, compressionType);
-        properties.put(ProducerConfig.LINGER_MS_CONFIG,Config.KAFKA_LINGER_MS.get());
-        int batchSize=(int) Config.KAFKA_BATCH_SIZE.get() * 1024; // Convert to bytes
-        properties.put(ProducerConfig.BATCH_SIZE_CONFIG,Integer.valueOf(batchSize));
+        properties.put(ProducerConfig.LINGER_MS_CONFIG, Config.KAFKA_LINGER_MS.get());
+        int batchSize = (int) Config.KAFKA_BATCH_SIZE.get() * 1024; // Convert to bytes
+        properties.put(ProducerConfig.BATCH_SIZE_CONFIG, batchSize);
         return properties;
     }
 
-    public static org.apache.kafka.clients.producer.KafkaProducer getKafkaProducer() {
-        return new org.apache.kafka.clients.producer.KafkaProducer(getKafkaProducerConfig());
+    public static KafkaProducer<String, String> getKafkaProducer() {
+        return new KafkaProducer<>(getKafkaProducerConfig());
     }
 }

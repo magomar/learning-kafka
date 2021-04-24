@@ -9,9 +9,7 @@ import com.twitter.hbc.core.endpoint.StatusesFilterEndpoint;
 import com.twitter.hbc.core.processor.StringDelimitedProcessor;
 import com.twitter.hbc.httpclient.auth.Authentication;
 import com.twitter.hbc.httpclient.auth.OAuth1;
-import org.apache.commons.configuration2.Configuration;
 import org.learning.kafka.Config;
-import org.learning.kafka.ConfigurationLoader;
 
 import java.util.Arrays;
 import java.util.concurrent.BlockingQueue;
@@ -22,8 +20,8 @@ public class TwitterConsumer {
     private final BlockingQueue<String> msgQueue;
 
     public TwitterConsumer(String... terms) {
-        Configuration config = ConfigurationLoader.load();
-        msgQueue = new LinkedBlockingQueue<>(Config.HOSEBIRD_MSG_QUEUE_CAPACITY.get());
+        int queueCapacity = Config.HOSEBIRD_MSG_QUEUE_CAPACITY.get();
+        msgQueue = new LinkedBlockingQueue<>(queueCapacity);
         Hosts hosebirdHosts = new HttpHosts(Constants.STREAM_HOST);
         StatusesFilterEndpoint hosebirdEndpoint = new StatusesFilterEndpoint();
         // Optional: set up some followings and track terms
