@@ -5,6 +5,9 @@ import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.elasticsearch.action.bulk.BulkRequest;
+import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.client.RequestOptions;
@@ -12,6 +15,7 @@ import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.xcontent.XContentType;
+import org.json.JSONObject;
 import org.learning.kafka.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,18 +52,47 @@ public class ElasticSearchClient {
         return client;
     }
 
-    public IndexResponse insert(String index, String jsonString) {
-        IndexRequest indexRequest = new IndexRequest(index)
-                .source(jsonString, XContentType.JSON);
-        IndexResponse indexResponse = null;
+    private static IndexRequest createIndexRequest(String index, String jsonString) {
+        IndexRequest indexRequest = new IndexRequest(index);
+        JSONObject object = new JSONObject(jsonString);
+        String tweetId=object.getString("id_str");
+        if (null==tweetId) {
+            logger.warn("Wrong data, not stored: "+jsonString);
+            return null;
+        }
+        indexRequest.id(tweetId);
+        return indexRequest;
+    }
+
+    public void insertBatch(String index, ConsumerRecords<String, String> records) {
+        BulkRequest bulkRequest = new BulkRequest();
+        records.forEach(record -> bulkRequest.add(createIndexRequest(index, record.value())));
+        BulkResponse response = null;
         try {
-            indexResponse = client.index(indexRequest, RequestOptions.DEFAULT);
-            logger.info("Inserted data with id {}", indexResponse.getId());
+            response = client.bulk(bulkRequest, RequestOptions.DEFAULT);
+            logger.info("Inserted {}", records.count());
         } catch (IOException e) {
             logger.error("Error inserting data ");
             e.printStackTrace();
         }
-        return indexResponse;
+    }
+
+    public void insert(String index, String jsonString) {
+        IndexRequest indexRequest = createIndexRequest(index, jsonString);
+        indexRequest.source(jsonString, XContentType.JSON);
+        IndexResponse indexResponse = null;
+        try {
+            indexResponse = client.index(indexRequest, RequestOptions.DEFAULT);
+            logger.info("Inserted tweet with id {}", indexResponse.getId());
+        } catch (IOException e) {
+            logger.error("Error inserting data ");
+            e.printStackTrace();
+        }
+        try {
+            Thread.sleep(10);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     private void close() {

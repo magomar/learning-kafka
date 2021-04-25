@@ -74,8 +74,21 @@ public class ElasticSearchKafkaConsumer {
             while (true) {
                 long millis = Config.KAFKA_POLLING_TIMEOUT.get();
                 ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(millis));
-                records.forEach(record -> System.out.println(record.value()));
-                records.forEach(record -> elasticSearchClient.insert(Config.ELASTIC_SEARCH_INDEX.get(), record.value()));
+                int numRecords = records.count();
+                logger.info(String.format("Received %d records", numRecords));
+                String index = (String) Config.ELASTIC_SEARCH_INDEX.get();
+                if (records.count() > 0) {
+                    elasticSearchClient.insertBatch(index, records);
+//                records.forEach(record -> elasticSearchClient.insert(index, record.value()));
+                    logger.info("Committing offsets...");
+                    consumer.commitSync();
+                    logger.info("Offsets have been comitted");
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
             }
         }
     }
@@ -88,6 +101,8 @@ public class ElasticSearchKafkaConsumer {
         properties.setProperty(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
         properties.setProperty(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
         properties.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+        properties.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
+        properties.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, "100");
         return properties;
     }
 }
