@@ -9,49 +9,51 @@ import com.twitter.hbc.core.endpoint.StatusesFilterEndpoint;
 import com.twitter.hbc.core.processor.StringDelimitedProcessor;
 import com.twitter.hbc.httpclient.auth.Authentication;
 import com.twitter.hbc.httpclient.auth.OAuth1;
-import org.learning.kafka.Config;
+import org.aeonbits.owner.ConfigCache;
+import org.learning.kafka.AppConfig;
 
 import java.util.Arrays;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class TwitterConsumer {
-    private final Client hosebirdClient;
+    private static final AppConfig config = ConfigCache.getOrCreate(AppConfig.class);
+    private final Client twitterClient;
     private final BlockingQueue<String> msgQueue;
 
     public TwitterConsumer(String... terms) {
-        int queueCapacity = Config.HOSEBIRD_MSG_QUEUE_CAPACITY.get();
+        int queueCapacity = config.twitterQueueCapacity();
         msgQueue = new LinkedBlockingQueue<>(queueCapacity);
-        Hosts hosebirdHosts = new HttpHosts(Constants.STREAM_HOST);
-        StatusesFilterEndpoint hosebirdEndpoint = new StatusesFilterEndpoint();
+        Hosts httpHosts = new HttpHosts(Constants.STREAM_HOST);
+        StatusesFilterEndpoint endpoint = new StatusesFilterEndpoint();
         // Optional: set up some followings and track terms
 //        List<Long> followings = Lists.newArrayList(1234L, 566788L);
 //        List<String> terms = Lists.newArrayList("kafka");
-//        hosebirdEndpoint.followings(followings);
-        hosebirdEndpoint.trackTerms(Arrays.asList(terms));
+//        twitterEndpoint.followings(followings);
+        endpoint.trackTerms(Arrays.asList(terms));
 
         // These secrets should be read from a config file
-        String consumerKey = Config.HOSEBIRD_KEY.get();
-        String consumerSecret = Config.HOSEBIRD_SECRET.get();
-        String token = Config.HOSEBIRD_TOKEN.get();
-        String tokenSecret = Config.HOSEBIRD_TOKEN_SECRET.get();
-        Authentication hosebirdAuth = new OAuth1(consumerKey, consumerSecret, token, tokenSecret);
+        String consumerKey = config.twitterKey();
+        String consumerSecret = config.twitterSecret();
+        String token = config.twitterToken();
+        String tokenSecret = config.twitterTokenSecret();
+        Authentication authentication = new OAuth1(consumerKey, consumerSecret, token, tokenSecret);
 
         ClientBuilder builder = new ClientBuilder()
-                .name(Config.HOSEBIRD_CLIENT_ID.get())  // optional: mainly for the logs
-                .hosts(hosebirdHosts)
-                .authentication(hosebirdAuth)
-                .endpoint(hosebirdEndpoint)
+                .name(config.twitterClientId())  // optional: mainly for the logs
+                .hosts(httpHosts)
+                .authentication(authentication)
+                .endpoint(endpoint)
                 .processor(new StringDelimitedProcessor(msgQueue));
 //                .eventMessageQueue(eventQueue);  // optional: use this if you want to process client events
 
-        hosebirdClient = builder.build();
+        twitterClient = builder.build();
         // Attempts to establish a connection.
-        hosebirdClient.connect();
+        twitterClient.connect();
     }
 
     public Client getHosebirdClient() {
-        return hosebirdClient;
+        return twitterClient;
     }
 
     public BlockingQueue<String> getMsgQueue() {

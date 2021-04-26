@@ -1,5 +1,6 @@
 package org.learning.kafka.elasticsearch;
 
+import org.aeonbits.owner.ConfigCache;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -16,7 +17,7 @@ import org.elasticsearch.client.RestClientBuilder;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.json.JSONObject;
-import org.learning.kafka.Config;
+import org.learning.kafka.AppConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,20 +25,13 @@ import java.io.IOException;
 
 public class ElasticSearchClient {
     private static final Logger logger = LoggerFactory.getLogger(ElasticSearchClient.class);
+    private static final AppConfig config = ConfigCache.getOrCreate(AppConfig.class);
     private final RestHighLevelClient client;
 
-    public static void main(String[] args) {
-        ElasticSearchClient connector = new ElasticSearchClient();
-        connector.insert(Config.ELASTIC_SEARCH_INDEX.get(),
-                "{\"foo\":\"bar\"}");
-        connector.close();
-
-    }
-
     public ElasticSearchClient() {
-        String hostname = Config.BONSAI_ELASTICSEARCH_HOSTNAME.get();
-        String username = Config.BONSAI_ELASTICSEARCH_USER.get();
-        String password = Config.BONSAI_ELASTICSEARCH_PWD.get();
+        String hostname = config.dbHostname();
+        String username = config.dbUsername();
+        String password = config.dbPassword();
         CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
         credentialsProvider.setCredentials(AuthScope.ANY,
                 new UsernamePasswordCredentials(username, password));

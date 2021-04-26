@@ -27,6 +27,8 @@ dependencies {
     implementation group: 'org.apache.kafka', name: 'kafka-clients', version: '2.7.0'
     // https://mvnrepository.com/artifact/info.picocli/picocli
     implementation group: 'info.picocli', name: 'picocli', version: '4.6.1'
+    // https://mvnrepository.com/artifact/org.aeonbits.owner/owner-java8
+    implementation group: 'org.aeonbits.owner', name: 'owner-java8', version: '1.0.12'
     // https://mvnrepository.com/artifact/com.twitter/hbc-core
     implementation group: 'com.twitter', name: 'hbc-core', version: '2.2.0'
     // https://mvnrepository.com/artifact/org.elasticsearch.client/elasticsearch-rest-high-level-client
