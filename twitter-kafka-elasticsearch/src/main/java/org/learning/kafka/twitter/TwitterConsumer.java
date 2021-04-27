@@ -52,7 +52,7 @@ public class TwitterConsumer {
         twitterClient.connect();
     }
 
-    public Client getHosebirdClient() {
+    public Client getTwitterClient() {
         return twitterClient;
     }
 

@@ -1,12 +1,14 @@
 package org.learning.kafka;
 
 import org.learning.kafka.elasticsearch.ElasticSearchKafkaConsumer;
+import org.learning.kafka.streams.TwitterFilter;
 import org.learning.kafka.twitter.TwitterKafkaProducer;
 import picocli.CommandLine;
 
 @CommandLine.Command(subcommands = {
         ProduceCommand.class,
-        ConsumeCommand.class
+        ConsumeCommand.class,
+        FilterCommand.class
 })
 public class TwittyCLI {
 
@@ -34,5 +36,14 @@ class ConsumeCommand implements Runnable {
     @Override
     public void run() {
         ElasticSearchKafkaConsumer.startConsumers();
+    }
+}
+
+@CommandLine.Command(name = "filter")
+class FilterCommand implements Runnable {
+
+    @Override
+    public void run() {
+        TwitterFilter.startStreaming();
     }
 }

@@ -41,18 +41,18 @@ public class TwitterKafkaProducer {
         logger.info("Setup");
 
         TwitterConsumer twitterConsumer = new TwitterConsumer(keywords);
-        Client client = twitterConsumer.getHosebirdClient();
+        Client client = twitterConsumer.getTwitterClient();
         BlockingQueue<String> msgQueue = twitterConsumer.getMsgQueue();
         KafkaProducer<String, String> producer = getKafkaProducer();
 
         // add a shutdown hook
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             logger.info("Caught shutdown hook");
-            logger.info("Stopping Hosebird client");
+            logger.info("Stopping Twitter client");
             client.stop();
             logger.info("Closing Kafka producer");
             producer.close();
-            logger.info("Application has exited");
+            logger.info("Producer terminated");
         }
         ));
 
@@ -87,9 +87,11 @@ public class TwitterKafkaProducer {
         properties.put(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, "5");
         // High throughput producer (at the expense of higher latency and CPU usage)
         String compressionType = config.compressionType();
-        if (null != compressionType) properties.setProperty(ProducerConfig.COMPRESSION_TYPE_CONFIG, compressionType);
+        if (null != compressionType) {
+            properties.setProperty(ProducerConfig.COMPRESSION_TYPE_CONFIG, compressionType);
+        }
         properties.put(ProducerConfig.LINGER_MS_CONFIG, config.lingerMs());
-        int batchSize = (int) config.batchSize() * 1024; // Convert to bytes
+        int batchSize = config.batchSize() * 1024; // Convert to bytes
         properties.put(ProducerConfig.BATCH_SIZE_CONFIG, batchSize);
         return properties;
     }

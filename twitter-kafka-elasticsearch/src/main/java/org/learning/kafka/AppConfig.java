@@ -38,6 +38,14 @@ public interface AppConfig extends Config {
     @DefaultValue("twitter-to-elasticsearch")
     String applicationId();
 
+    @Key("kafka.filter.application_id")
+    @DefaultValue("twitter-filter")
+    String twitterFilterId();
+
+    @Key("kafka.filter.topic")
+    @DefaultValue("filtered-tweets")
+    String twitterFilterTopic();
+
     @Key("kafka.bootstrap_servers")
     @DefaultValue("localhost:9092")
     String bootstrapServers();
@@ -78,10 +86,8 @@ public interface AppConfig extends Config {
     String dbHostname();
 
     @Key("elasticsearch.username")
-    @DefaultValue("twitter")
     String dbUsername();
 
     @Key("elasticsearch.password")
-    @DefaultValue("twitter")
     String dbPassword();
 }
